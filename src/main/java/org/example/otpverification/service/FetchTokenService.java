@@ -2,10 +2,8 @@ package org.example.otpverification.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.otpverification.dto.Otp;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-
 import java.security.MessageDigest;
 import java.util.Base64;
 
@@ -14,52 +12,14 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class FetchTokenService {
 
-    private final WebClient.Builder webclient;
-
-    private String generateServiceUrl = "http://localhost:8081";
+    private final RedisTemplate<String , String> redisTemplate;
 
     public String getOtp(String email) {
-
-        log.info("Fetching token from URL: ", generateServiceUrl, email);
-
-        WebClient webClient = webclient.baseUrl(generateServiceUrl).build();
-
-
-        try {
-            Otp.TokenResponse response = webClient.get()
-                    .uri("/internal/fetch-token/{email}", email)
-                    .retrieve()
-                    .bodyToMono(Otp.TokenResponse.class)
-                    .block();
-
-            if (response != null) {
-                log.info("fetched token for email" + email);
-                return response.getOtp();
-            }
-        } catch (Exception e) {
-            log.error("could not fetch for email:" + email);
-        }
-        return null;
+        return redisTemplate.opsForValue().get(email);
     }
 
-    public boolean removeOtp(String email) {
-        log.info("trying to remove token from this email:" + email);
-
-        WebClient webClient = webclient.baseUrl(generateServiceUrl).build();
-
-        try {
-            Boolean remove = webClient.post()
-                    .uri("/internal/remove-token/{email}", email)
-                    .retrieve()
-                    .bodyToMono(Boolean.class)
-                    .block();
-
-            return Boolean.TRUE.equals(remove);
-        } catch (Exception e) {
-            log.error("could not remove the otp in fetchtokenservice", e.getMessage());
-        }
-
-        return Boolean.FALSE;
+    public boolean removeOtp(String email){
+        return Boolean.TRUE.equals(redisTemplate.delete(email));
     }
 
     public String hashOtp(String enteredOtp) {
@@ -78,4 +38,6 @@ public class FetchTokenService {
         }
         return null;
     }
+
+
 }

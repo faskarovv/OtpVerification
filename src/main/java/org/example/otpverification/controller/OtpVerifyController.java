@@ -3,6 +3,7 @@ package org.example.otpverification.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.otpverification.service.FetchTokenService;
 import org.example.otpverification.service.OtpVerificationService;
 import org.example.otpverification.dto.Otp;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class OtpVerifyController {
 
     private final OtpVerificationService otpVerificationService;
+    private final FetchTokenService fetchTokenService;
     private final WebClient.Builder webClient;
 
     @PostMapping("/verify")
