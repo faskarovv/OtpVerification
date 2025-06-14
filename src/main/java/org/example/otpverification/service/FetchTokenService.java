@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+
 import java.security.MessageDigest;
 import java.util.Base64;
 
@@ -12,14 +13,23 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class FetchTokenService {
 
-    private final RedisTemplate<String , String> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplate;
 
     public String getOtp(String email) {
+
         return redisTemplate.opsForValue().get(email);
     }
 
-    public boolean removeOtp(String email){
-        return Boolean.TRUE.equals(redisTemplate.delete(email));
+    public boolean removeOtp(String email) {
+        boolean removed = redisTemplate.delete(email);
+
+        if (removed) {
+            log.info("removed the token {} ", email);
+            return true;
+        } else {
+            log.error("could not remove token");
+            return false;
+        }
     }
 
     public String hashOtp(String enteredOtp) {

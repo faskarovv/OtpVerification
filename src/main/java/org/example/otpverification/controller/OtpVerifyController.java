@@ -3,9 +3,11 @@ package org.example.otpverification.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.otpverification.service.FetchTokenService;
+import org.example.otpverification.dto.GenerationReq;
+import org.example.otpverification.dto.RequestDto;
+import org.example.otpverification.dto.ResponseDto;
+import org.example.otpverification.entity.Status;
 import org.example.otpverification.service.OtpVerificationService;
-import org.example.otpverification.dto.Otp;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,21 +22,22 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class OtpVerifyController {
 
     private final OtpVerificationService otpVerificationService;
-    private final FetchTokenService fetchTokenService;
     private final WebClient.Builder webClient;
 
     @PostMapping("/verify")
-    public ResponseEntity<Otp.Response> verifyOtp(@Valid @RequestBody Otp.Request request) {
+    public ResponseEntity<ResponseDto> verifyOtp(@Valid @RequestBody RequestDto request) {
 
         boolean isValid = otpVerificationService.verifyOtp(request.getEmail(), request.getOtp());
 
         if (isValid) {
-            return ResponseEntity.ok(new Otp.Response("accepted", "otp deleted from database"));
-        } else return ResponseEntity.badRequest().body(new Otp.Response("denied", "invalid otp"));
+            return ResponseEntity.ok(new ResponseDto(Status.ACTIVE.toString(), "otp deleted from database"));
+        } else {
+            return ResponseEntity.badRequest().body(new ResponseDto(Status.INACTIVE.toString(), "invalid otp"));
+        }
     }
 
     @PostMapping("/generate")
-    public ResponseEntity<?> generateOtp(@RequestBody Otp.GenerationReq generationReq) {
+    public ResponseEntity<?> generateOtp(@RequestBody GenerationReq generationReq) {
 
         try {
             String url = "http://localhost:8081/otp/generate";
